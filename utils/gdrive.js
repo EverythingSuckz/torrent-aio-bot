@@ -44,7 +44,7 @@ if (config.CLIENT_ID && config.CLIENT_SECRET) {
 }
 
 async function authorize() {
-  const oAuth2Client = new google.auth.OAuth2(config.CLIENT_ID, config.CLIENT_SECRET, "urn:ietf:wg:oauth:2.0:oob");
+  const oAuth2Client = new google.auth.OAuth2(config.CLIENT_ID, config.CLIENT_SECRET, `http://[::1]:${config.PORT}`);
 
   if (!config.AUTH_CODE) {
     const authUrl = oAuth2Client.generateAuthUrl({
@@ -74,7 +74,7 @@ async function authorize() {
 }
 
 function getAuthURL(CLIENT_ID, CLIENT_SECRET) {
-  const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, "urn:ietf:wg:oauth:2.0:oob");
+  const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, `http://[::1]:${config.PORT}`);
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: "offline",
     scope: SCOPES
@@ -84,7 +84,7 @@ function getAuthURL(CLIENT_ID, CLIENT_SECRET) {
 
 function getAuthToken(CLIENT_ID, CLIENT_SECRET, AUTH_CODE) {
   return new Promise((resolve, reject) => {
-    const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, "urn:ietf:wg:oauth:2.0:oob");
+    const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, `http://[::1]:${config.PORT}`);
     oAuth2Client.getToken(AUTH_CODE, (err, token) => {
       err ? reject(err) : resolve(token);
     });
