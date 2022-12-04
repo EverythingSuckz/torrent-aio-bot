@@ -1,8 +1,9 @@
 const puppeteer = require("puppeteer");
-const PIRATEBAY_SITE =
-  process.env.PIRATEBAY_SITE || "https://thepiratebay.org/search/{term}";
+// import { config } from "../../config";
+const config = require("../../config");
 
-async function search(search, site = PIRATEBAY_SITE) {
+
+async function search(search, site = config.PIRATEBAY_SITE) {
   try {
     var browser = await puppeteer.launch({
       headless: true,

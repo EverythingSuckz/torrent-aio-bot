@@ -1,5 +1,8 @@
 node_modules/
 .next/
-config.js
 test.js
+logs.txt
+.env
+package-lock.json
+sa/
 logs.txt

@@ -1,39 +1,40 @@
 const fs = require("fs");
 const { google } = require("googleapis");
 const logger = require("./logger");
-const dev = process.env.NODE_ENV !== "production";
-const { CLIENT_ID, CLIENT_SECRET, TOKEN, AUTH_CODE, GDRIVE_PARENT_FOLDER } = dev ? require("../config").creds : process.env;
+// import { config } from "../config";
+const config  = require("../config");
+
 let parsedToken = null;
-if (TOKEN) {
+if (config.GDRIVE_TOKEN) {
   try {
-    parsedToken = JSON.parse(TOKEN);
+    parsedToken = JSON.parse(config.GDRIVE_TOKEN);
   } catch (e) {
-    logger("TOKEN env not correct\nTOKEN set to:", TOKEN);
+    logger("GDRIVE_TOKEN env not correct\nTOKEN set to:", config.GDRIVE_TOKEN);
   }
 }
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly", "https://www.googleapis.com/auth/drive.file"];
 
-if (!CLIENT_ID) {
+if (!config.CLIENT_ID) {
   logger("CLIENT_ID env not set. Not uploading to gdrive.");
 }
-if (!CLIENT_SECRET) {
+if (!config.CLIENT_SECRET) {
   logger("CLIENT_SECRET env not set. Not uploading to gdrive.");
 }
-if (!AUTH_CODE) {
+if (!config.AUTH_CODE) {
   logger("AUTH_CODE env not set.");
 }
-if (!TOKEN) {
-  logger("TOKEN env not set.");
+if (!config.GDRIVE_TOKEN) {
+  logger("GDRIVE_TOKEN env not set.");
 }
-if (GDRIVE_PARENT_FOLDER) {
-  logger(`GDRIVE_PARENT_FOLDER set to ${GDRIVE_PARENT_FOLDER}`);
+if (config.GDRIVE_PARENT_FOLDER) {
+  logger(`GDRIVE_PARENT_FOLDER set to ${config.GDRIVE_PARENT_FOLDER}`);
 }
 
 let auth = null;
 let drive = null;
 
-if (CLIENT_ID && CLIENT_SECRET) {
+if (config.CLIENT_ID && config.CLIENT_SECRET) {
   authorize().then(a => {
     if (!a) return;
     auth = a;
@@ -43,32 +44,32 @@ if (CLIENT_ID && CLIENT_SECRET) {
 }
 
 async function authorize() {
-  const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, "urn:ietf:wg:oauth:2.0:oob");
+  const oAuth2Client = new google.auth.OAuth2(config.CLIENT_ID, config.CLIENT_SECRET, "urn:ietf:wg:oauth:2.0:oob");
 
-  if (!AUTH_CODE) {
+  if (!config.AUTH_CODE) {
     const authUrl = oAuth2Client.generateAuthUrl({
       access_type: "offline",
       scope: SCOPES
     });
     logger(`Get AUTH_CODE env by visiting this url: \n${authUrl}\n`);
     return null;
-  } else if (AUTH_CODE && !TOKEN) {
-    return oAuth2Client.getToken(AUTH_CODE, (err, token) => {
+  } else if (config.AUTH_CODE && !config.GDRIVE_TOKEN) {
+    return oAuth2Client.getToken(config.AUTH_CODE, (err, token) => {
       if (err) {
         console.error("Error retrieving access token\n", err);
         return null;
       }
       oAuth2Client.setCredentials(token);
-      if (!TOKEN) logger("Set TOKEN env to:\n", JSON.stringify(token));
+      if (!config.GDRIVE_TOKEN) logger("Set GDRIVE_TOKEN env to:\n", JSON.stringify(token));
       else logger("Gdrive config OK.");
       return oAuth2Client;
     });
-  } else if (AUTH_CODE && TOKEN) {
+  } else if (config.AUTH_CODE && config.GDRIVE_TOKEN) {
     oAuth2Client.setCredentials(parsedToken);
     return oAuth2Client;
   } else {
-    logger("AUTH_CODE:", !!AUTH_CODE);
-    logger("TOKEN:", !!TOKEN);
+    logger("AUTH_CODE:", !!config.AUTH_CODE);
+    logger("GDRIVE_TOKEN:", !!config.GDRIVE_TOKEN);
   }
 }
 
@@ -102,7 +103,7 @@ function createFolder(name, parentId) {
   });
 }
 
-function uploadFileStream(name, stream, parentId = GDRIVE_PARENT_FOLDER) {
+function uploadFileStream(name, stream, parentId = config.GDRIVE_PARENT_FOLDER) {
   return new Promise((resolve, reject) => {
     var media = { body: stream };
     drive.files.create(
@@ -112,7 +113,7 @@ function uploadFileStream(name, stream, parentId = GDRIVE_PARENT_FOLDER) {
   });
 }
 
-function uploadFile(name, path, parentId = GDRIVE_PARENT_FOLDER) {
+function uploadFile(name, path, parentId = config.GDRIVE_PARENT_FOLDER) {
   return new Promise((resolve, reject) => {
     var media = { body: fs.createReadStream(path) };
     drive.files.create(
@@ -131,7 +132,7 @@ async function uploadFolder(path, parentId) {
 
     if (stat.isDirectory()) {
       // make a folder in gdrive
-      const folder = await createFolder(name, parentId || GDRIVE_PARENT_FOLDER);
+      const folder = await createFolder(name, parentId || config.GDRIVE_PARENT_FOLDER);
       const folderId = folder.data.id;
 
       // get list of folders contents
@@ -159,7 +160,7 @@ async function uploadFolder(path, parentId) {
       return `https://drive.google.com/drive/folders/${folderId}`;
     } else if (stat.isFile()) {
       // make a folder in gdrive
-      const folder = await createFolder(name, parentId || GDRIVE_PARENT_FOLDER);
+      const folder = await createFolder(name, parentId || config.GDRIVE_PARENT_FOLDER);
       const folderId = folder.data.id;
 
       // upload the file to drive
@@ -184,14 +185,14 @@ async function uploadWithLog(path, parentId) {
     fs.appendFileSync(gdriveText, `Gdrive url: ${url}`);
     return url;
   } else {
-    fs.appendFileSync(gdriveText, `An error occured. GDRIVE_PARENT_FOLDER: ${GDRIVE_PARENT_FOLDER}`);
+    fs.appendFileSync(gdriveText, `An error occured. GDRIVE_PARENT_FOLDER: ${config.GDRIVE_PARENT_FOLDER}`);
     return null;
   }
 }
 
 function getFiles(folderId) {
   let query;
-  const parent = folderId || GDRIVE_PARENT_FOLDER;
+  const parent = folderId ||config.GDRIVE_PARENT_FOLDER;
   if (parent) query = `'${parent}' in parents and trashed = false`;
   else query = "trashed = false";
   return new Promise((resolve, reject) => {

@@ -1,7 +1,7 @@
 const puppeteer = require("puppeteer");
-const LIMETORRENT_SITE = process.env.LIMETORRENT_SITE || "https://limetorrents.at/search?search={term}";
+const config = require("../../config");
 
-async function search(search, site = LIMETORRENT_SITE) {
+async function search(search, site = config.LIMETORRENT_SITE) {
   try {
     var browser = await puppeteer.launch({
       headless: true,

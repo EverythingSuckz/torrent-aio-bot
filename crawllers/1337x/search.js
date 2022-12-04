@@ -1,7 +1,7 @@
 const puppeteer = require("puppeteer");
-const O337X_SITE = process.env.O337X_SITE || "https://www.1337x.am/search/{term}/1/";
+const config = require("../../config");
 
-async function search(search, site = O337X_SITE) {
+async function search(search, site = config.O337X_SITE) {
   try {
     var browser = await puppeteer.launch({
       headless: true,

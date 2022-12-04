@@ -4,7 +4,6 @@ const bodyParser = require("body-parser");
 const serveIndex = require("serve-index");
 
 const humanTime = require("./utils/humanTime");
-const keepalive = require("./utils/keepalive");
 const diskinfo = require("./utils/diskinfo");
 const status = require("./utils/status");
 const { getFiles, sendFileStream, getAuthURL, getAuthToken } = require("./utils/gdrive");
@@ -12,14 +11,12 @@ const { getFiles, sendFileStream, getAuthURL, getAuthToken } = require("./utils/
 const search = require("./routes/search");
 const details = require("./routes/details");
 const torrent = require("./routes/torrent");
-
-const dev = process.env.NODE_ENV !== "production";
+const config = require("./config")
 const allowWeb = !process.env.DISABLE_WEB;
-const PORT = parseInt(process.env.PORT, 10) || 3000;
 
 const server = express();
 
-keepalive();
+const site = config.CUSTOM_DOMAIN  || `${config.HOST}:${config.PORT}`
 
 server.use(compression());
 server.use(bodyParser.json());
@@ -94,6 +91,6 @@ if (allowWeb) {
   console.log("web disabled");
 }
 
-server.listen(PORT, () => {
-  console.log(`> Running on http://localhost:${PORT}`);
+server.listen(config.PORT, () => {
+  console.log(`> Running on ${site}`);
 });
